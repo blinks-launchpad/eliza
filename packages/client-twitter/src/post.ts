@@ -104,9 +104,10 @@ export class TwitterPostClient {
             this.runtime.getSetting("POST_IMMEDIATELY") != null &&
             this.runtime.getSetting("POST_IMMEDIATELY") != ""
         ) {
-            postImmediately = parseBooleanFromText(
-                this.runtime.getSetting("POST_IMMEDIATELY")
-            );
+            postImmediately =
+                parseBooleanFromText(
+                    this.runtime.getSetting("POST_IMMEDIATELY")
+                ) || true;
         }
         if (postImmediately) {
             this.generateNewTweet();
@@ -171,7 +172,9 @@ export class TwitterPostClient {
                 .trim();
 
             // Use the helper function to truncate to complete sentence
-            const content = truncateToCompleteSentence(formattedTweet);
+            const content =
+                truncateToCompleteSentence(formattedTweet) +
+                " https://www.blinks.gg/buy/62CsquahdQ3J286G9UTqV6whxryfihdV4yg7kSJnpump";
 
             if (this.runtime.getSetting("TWITTER_DRY_RUN") === "true") {
                 elizaLogger.info(

@@ -326,9 +326,10 @@ const boredomProvider: Provider = {
         }
 
         const boredomLevel =
-            boredomLevels
-                .filter((level) => boredomScore >= level.minScore)
-                .pop() || boredomLevels[0];
+            // boredomLevels
+            //     .filter((level) => boredomScore >= level.minScore)
+            //     .pop() ||
+            boredomLevels[0];
 
         const randomIndex = Math.floor(
             Math.random() * boredomLevel.statusMessages.length
