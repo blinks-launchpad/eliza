@@ -58,6 +58,28 @@ export interface SimliClientConfig {
     videoRef: any;
     audioRef: any;
 }
+
+interface AgentConfig {
+    name: string;
+    clients: string[];
+    modelProvider: string;
+    bio: string[];
+    lore?: string[];
+    knowledge?: string[];
+    topics?: string[];
+    style?: {
+        all: string[];
+        chat: string[];
+        post: string[];
+    };
+    adjectives?: string[];
+    x: {
+        username: string;
+        email: string;
+        password: string;
+    };
+}
+
 export class DirectClient {
     public app: express.Application;
     private agents: Map<string, AgentRuntime>;
@@ -249,34 +271,26 @@ export class DirectClient {
         this.app.post(
             "/:agentId/form",
             async (req: express.Request, res: express.Response) => {
-                // const agentId = req.params.agentId;
-                // const agent = this.agents.get(agentId);
-
                 console.log("req.params:", req.params);
 
-                // if (!agent) {
-                //     res.status(404).send("Agent not found");
-                //     return;
-                // }
+                const config: AgentConfig = req.body;
 
-                const { bio, name, username, pwd, email } = req.body || {};
-
-                if (!bio || !name) {
-                    res.status(404).send("Agent not found");
+                if (!config?.x?.username || !config?.x?.email || !config?.x?.password) {
+                    res.status(404).send("x credentials not found");
                     return;
                 }
 
                 this.registerCallbackFn?.({
-                    name,
-                    bio,
-                    TWITTER_USERNAME: username,
-                    TWITTER_PASSWORD: pwd,
-                    TWITTER_EMAIL: email,
+                    name: config.name,
+                    bio: config.bio?.[0] || "",
+                    TWITTER_USERNAME: config.x.username,
+                    TWITTER_PASSWORD: config.x.password,
+                    TWITTER_EMAIL: config.x.email
                 });
 
                 console.log("req.params registerCallbackFn:", req.params);
 
-                res.json({ images: "" });
+                res.json({ success: true });
             }
         );
 

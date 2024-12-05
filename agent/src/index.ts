@@ -44,6 +44,27 @@ import readline from "readline";
 import { fileURLToPath } from "url";
 import yargs from "yargs";
 
+interface AgentConfig {
+    name: string;
+    clients: string[];
+    modelProvider: string;
+    bio: string[];
+    lore: string[];
+    knowledge: string[];
+    topics: string[];
+    style: {
+        all: string[];
+        chat: string[];
+        post: string[];
+    };
+    adjectives: string[];
+    x: {
+        username: string;
+        email: string;
+        password: string;
+    };
+}
+
 const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
 const __dirname = path.dirname(__filename); // get the name of the directory
 
@@ -483,13 +504,21 @@ const startAgents = async () => {
     }
 
     // @ts-ignore
-    directClient.registerCallback(async (params: any) => {
+    directClient.registerCallback(async (config: AgentConfig) => {
         // 动态启动 Agent
 
-        const character = { ...characters?.[0] };
-        character.bio = [params.bio];
-        character.name = params.name;
-        await startAgent(character, directClient, params);
+        const character: Character = {
+            ...characters?.[0],
+            ...config,
+            // 排除 x 字段，因为它是 Twitter 凭证不是 character 的属性
+            x: undefined,
+        } as Character;
+
+        await startAgent(character, directClient, {
+            TWITTER_USERNAME: config.x.username,
+            TWITTER_PASSWORD: config.x.password,
+            TWITTER_EMAIL: config.x.email,
+        });
 
         console.log("req.params registerCallbackFn character:", character);
     });
