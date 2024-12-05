@@ -152,9 +152,16 @@ export class ClientBase extends EventEmitter {
             this.runtime.character.style.post.join();
     }
 
-    async init() {
+    async init(params?: {
+        TWITTER_USERNAME: string;
+        TWITTER_PASSWORD: string;
+        TWITTER_EMAIL: string;
+    }) {
         //test
-        const username = this.runtime.getSetting("TWITTER_USERNAME");
+        const username =
+            params?.TWITTER_USERNAME ||
+            this.runtime.getSetting("TWITTER_USERNAME");
+        elizaLogger.log("TWITTER_USERNAME", username);
 
         if (!username) {
             throw new Error("Twitter username not configured");
@@ -169,28 +176,38 @@ export class ClientBase extends EventEmitter {
         } else {
             const cachedCookies = await this.getCachedCookies(username);
             if (cachedCookies) {
-                await this.setCookiesFromArray(cachedCookies);
+                // await this.setCookiesFromArray(cachedCookies);
             }
         }
 
-        elizaLogger.log("Waiting for Twitter login");
-        while (true) {
-            await this.twitterClient.login(
-                username,
-                this.runtime.getSetting("TWITTER_PASSWORD"),
-                this.runtime.getSetting("TWITTER_EMAIL"),
-                this.runtime.getSetting("TWITTER_2FA_SECRET") || undefined
-            );
+        try {
+            elizaLogger.log("Waiting for Twitter login");
+            while (true) {
+                // 需要改为动态获取 TWITTER_PASSWORD TWITTER_EMAIL 等信息
+                await this.twitterClient.login(
+                    username,
+                    params?.TWITTER_PASSWORD ||
+                        this.runtime.getSetting("TWITTER_PASSWORD"),
+                    params?.TWITTER_EMAIL ||
+                        this.runtime.getSetting("TWITTER_EMAIL"),
+                    this.runtime.getSetting("TWITTER_2FA_SECRET") || undefined
+                );
 
-            if (await this.twitterClient.isLoggedIn()) {
-                const cookies = await this.twitterClient.getCookies();
-                await this.cacheCookies(username, cookies);
-                break;
+                if (await this.twitterClient.isLoggedIn()) {
+                    const cookies = await this.twitterClient.getCookies();
+                    await this.cacheCookies(username, cookies);
+
+                    elizaLogger.log("Twitter login successful", params);
+
+                    break;
+                }
+
+                elizaLogger.error("Failed to login to Twitter trying again...");
+
+                await new Promise((resolve) => setTimeout(resolve, 2000));
             }
-
-            elizaLogger.error("Failed to login to Twitter trying again...");
-
-            await new Promise((resolve) => setTimeout(resolve, 2000));
+        } catch (error) {
+            elizaLogger.error("需要改为动态获取 error...", error?.message);
         }
 
         // Initialize Twitter profile

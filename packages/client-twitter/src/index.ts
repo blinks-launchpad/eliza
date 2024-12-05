@@ -22,14 +22,21 @@ class TwitterManager {
 }
 
 export const TwitterClientInterface: Client = {
-    async start(runtime: IAgentRuntime) {
+    async start(
+        runtime: IAgentRuntime,
+        params?: {
+            TWITTER_USERNAME: string;
+            TWITTER_PASSWORD: string;
+            TWITTER_EMAIL: string;
+        }
+    ) {
         await validateTwitterConfig(runtime);
 
         elizaLogger.log("Twitter client started");
 
         const manager = new TwitterManager(runtime);
 
-        await manager.client.init();
+        await manager.client.init(params);
 
         await manager.post.start();
 

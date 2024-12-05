@@ -247,6 +247,40 @@ export class DirectClient {
         );
 
         this.app.post(
+            "/:agentId/form",
+            async (req: express.Request, res: express.Response) => {
+                // const agentId = req.params.agentId;
+                // const agent = this.agents.get(agentId);
+
+                console.log("req.params:", req.params);
+
+                // if (!agent) {
+                //     res.status(404).send("Agent not found");
+                //     return;
+                // }
+
+                const { bio, name, username, pwd, email } = req.body || {};
+
+                if (!bio || !name) {
+                    res.status(404).send("Agent not found");
+                    return;
+                }
+
+                this.registerCallbackFn?.({
+                    name,
+                    bio,
+                    TWITTER_USERNAME: username,
+                    TWITTER_PASSWORD: pwd,
+                    TWITTER_EMAIL: email,
+                });
+
+                console.log("req.params registerCallbackFn:", req.params);
+
+                res.json({ images: "" });
+            }
+        );
+
+        this.app.post(
             "/:agentId/image",
             async (req: express.Request, res: express.Response) => {
                 const agentId = req.params.agentId;
@@ -419,6 +453,12 @@ export class DirectClient {
                 elizaLogger.success("Server stopped");
             });
         }
+    }
+
+    registerCallbackFn: any;
+
+    public registerCallback(callback: () => void) {
+        this.registerCallbackFn = callback;
     }
 }
 

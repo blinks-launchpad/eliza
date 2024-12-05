@@ -2,7 +2,7 @@
     "name": "MemeVerse",
     "description": "Your AI-powered Meme Coin companion. Creating, analyzing, and spreading viral memes on Solana. Building the future of social tokens, one meme at a time! 🚀",
     "clients": ["twitter"],
-    "modelProvider": "redpill",
+    "modelProvider": "ollama",
     "settings": {
         "secrets": {},
         "voice": {

@@ -293,7 +293,12 @@ function initializeDatabase(dataDir: string) {
 
 export async function initializeClients(
     character: Character,
-    runtime: IAgentRuntime
+    runtime: IAgentRuntime,
+    params?: {
+        TWITTER_USERNAME: string;
+        TWITTER_PASSWORD: string;
+        TWITTER_EMAIL: string;
+    }
 ) {
     const clients = [];
     const clientTypes =
@@ -314,7 +319,13 @@ export async function initializeClients(
     }
 
     if (clientTypes.includes("twitter")) {
-        const twitterClients = await TwitterClientInterface.start(runtime);
+        const twitterClients = await TwitterClientInterface.start(
+            runtime,
+            // @ts-ignore
+            params
+        ).catch((e) => {
+            console.error(e);
+        });
         clients.push(twitterClients);
     }
 
@@ -409,7 +420,16 @@ function intializeDbCache(character: Character, db: IDatabaseCacheAdapter) {
     return cache;
 }
 
-async function startAgent(character: Character, directClient) {
+// 调用这个函数，就可以自定义一个agent
+async function startAgent(
+    character: Character,
+    directClient,
+    params?: {
+        TWITTER_USERNAME: string;
+        TWITTER_PASSWORD: string;
+        TWITTER_EMAIL: string;
+    }
+) {
     let db: IDatabaseAdapter & IDatabaseCacheAdapter;
     try {
         character.id ??= stringToUuid(character.name);
@@ -432,7 +452,7 @@ async function startAgent(character: Character, directClient) {
 
         await runtime.initialize();
 
-        const clients = await initializeClients(character, runtime);
+        const clients = await initializeClients(character, runtime, params);
 
         directClient.registerAgent(runtime);
 
@@ -461,6 +481,18 @@ const startAgents = async () => {
     if (charactersArg) {
         characters = await loadCharacters(charactersArg);
     }
+
+    // @ts-ignore
+    directClient.registerCallback(async (params: any) => {
+        // 动态启动 Agent
+
+        const character = { ...characters?.[0] };
+        character.bio = [params.bio];
+        character.name = params.name;
+        await startAgent(character, directClient, params);
+
+        console.log("req.params registerCallbackFn character:", character);
+    });
 
     try {
         for (const character of characters) {
