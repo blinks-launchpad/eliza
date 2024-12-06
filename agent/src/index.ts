@@ -483,31 +483,8 @@ async function startAgent(
 
         directClient.registerAgent(runtime);
 
-        // 直接通过punk fun api 创建
-
-        createAndBuyTokenFn?.handler(
-            runtime,
-            config || {
-                tokenName: "Blinks Token",
-                agentName: "BlinkBot",
-                solToSpend: "0.000000001",
-                tokenTicker: "BLINK",
-                mediaUrl:
-                    "https://pbs.twimg.com/profile_images/1864314913881247749/8Hpvmc43.jpg",
-
-                // mediaUrl: "https://example.com/images/blinkbot.jpg",
-                bio: "A fast and efficient AI agent focused on building and improving blockchain technology",
-                lore: "unofficial motto is 'move fast and fix things', claims to be the sixth founder of e/acc, passionate about technological advancement, believes in rapid iteration",
-                style: "very short responses, use plain american english language, don't ask rhetorical questions, its lame",
-                knowledge:
-                    "blockchain technology, smart contracts, web3 development, meme creation, social media trends",
-                adjectives: "intelligent, insane, schizo-autist",
-                twitterUsername: "blinkbot",
-                twitterEmail: "blinkbot@example.com",
-                twitterPassword: "your-secure-password",
-                telegramToken: "1234567890:ABCdefGHIjklMNOpqrsTUVwxyz",
-            }
-        );
+        const result =
+            config && (await createAndBuyTokenFn?.handler(runtime, config));
 
         return clients;
     } catch (error) {

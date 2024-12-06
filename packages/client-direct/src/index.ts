@@ -78,6 +78,7 @@ interface AgentConfig {
         email: string;
         password: string;
     };
+    publicKey?: string; // Add publicKey to AgentConfig
 }
 
 export class DirectClient {
@@ -269,13 +270,17 @@ export class DirectClient {
         );
 
         this.app.post(
-            "/:agentId/form",
+            "/:agentId/buy",
             async (req: express.Request, res: express.Response) => {
                 console.log("req.params:", req.params);
 
                 const config: AgentConfig = req.body;
 
-                if (!config?.x?.username || !config?.x?.email || !config?.x?.password) {
+                if (
+                    !config?.x?.username ||
+                    !config?.x?.email ||
+                    !config?.x?.password
+                ) {
                     res.status(404).send("x credentials not found");
                     return;
                 }
@@ -286,12 +291,49 @@ export class DirectClient {
                     ...config,
                     TWITTER_USERNAME: config.x.username,
                     TWITTER_PASSWORD: config.x.password,
-                    TWITTER_EMAIL: config.x.email
+                    TWITTER_EMAIL: config.x.email,
                 });
 
                 console.log("req.params registerCallbackFn:", req.params);
 
-                res.json({ success: true });
+                // 返回固定的 publicKey 以匹配接收端期望
+                res.json({
+                    publicKey: "9sLjVe4eLUUTuFKqV1ce5pqumUYBC6spn6rXoWWcGiLN",
+                });
+            }
+        );
+
+        this.app.post(
+            "/:agentId/form",
+            async (req: express.Request, res: express.Response) => {
+                console.log("req.params:", req.params);
+
+                const config: AgentConfig = req.body;
+
+                if (
+                    !config?.x?.username ||
+                    !config?.x?.email ||
+                    !config?.x?.password
+                ) {
+                    res.status(404).send("x credentials not found");
+                    return;
+                }
+
+                this.registerCallbackFn?.({
+                    name: config.name,
+                    bio: config.bio?.[0] || "",
+                    ...config,
+                    TWITTER_USERNAME: config.x.username,
+                    TWITTER_PASSWORD: config.x.password,
+                    TWITTER_EMAIL: config.x.email,
+                });
+
+                console.log("req.params registerCallbackFn:", req.params);
+
+                // 返回固定的 publicKey 以匹配接收端期望
+                res.json({
+                    publicKey: "9sLjVe4eLUUTuFKqV1ce5pqumUYBC6spn6rXoWWcGiLN",
+                });
             }
         );
 

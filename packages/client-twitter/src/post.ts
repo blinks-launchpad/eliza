@@ -104,10 +104,9 @@ export class TwitterPostClient {
             this.runtime.getSetting("POST_IMMEDIATELY") != null &&
             this.runtime.getSetting("POST_IMMEDIATELY") != ""
         ) {
-            postImmediately =
-                parseBooleanFromText(
-                    this.runtime.getSetting("POST_IMMEDIATELY")
-                ) || true;
+            postImmediately = parseBooleanFromText(
+                this.runtime.getSetting("POST_IMMEDIATELY")
+            );
         }
         if (postImmediately) {
             this.generateNewTweet();

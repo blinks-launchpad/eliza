@@ -543,95 +543,8 @@ export const createAndBuyTokenFn = {
         runtime: IAgentRuntime,
         config: AgentConfig,
         callback?: HandlerCallback
-    ): Promise<boolean> => {
+    ) => {
         console.log("Starting CREATE_AND_BUY_TOKEN handler...");
-
-        // // Compose state if not provided
-        // if (!state) {
-        //     state = (await runtime.composeState(message)) as State;
-        // } else {
-        //     state = await runtime.updateRecentMessageState(state);
-        // }
-
-        // // Get wallet info for context
-        // const walletInfo = await walletProvider.get(runtime, message, state);
-        // state.walletInfo = walletInfo;
-
-        // // Generate structured content from natural language
-        // const pumpContext = composeContext({
-        //     state,
-        //     template: pumpfunTemplate,
-        // });
-
-        // const content = await generateObject({
-        //     runtime,
-        //     context: pumpContext,
-        //     modelClass: ModelClass.LARGE,
-        // });
-
-        // // Validate the generated content
-        // if (!isCreateAndBuyContent(runtime, content)) {
-        //     console.error("Invalid content for CREATE_AND_BUY_TOKEN action.");
-        //     return false;
-        // }
-
-        // const { tokenMetadata, buyAmountSol } = config;
-        /*
-            // Generate image if tokenMetadata.file is empty or invalid
-            if (!tokenMetadata.file || tokenMetadata.file.length < 100) {  // Basic validation
-                try {
-                    const imageResult = await generateImage({
-                        prompt: `logo for ${tokenMetadata.name} (${tokenMetadata.symbol}) token - ${tokenMetadata.description}`,
-                        width: 512,
-                        height: 512,
-                        count: 1
-                    }, runtime);
-
-                    if (imageResult.success && imageResult.data && imageResult.data.length > 0) {
-                        // Remove the "data:image/png;base64," prefix if present
-                        tokenMetadata.file = imageResult.data[0].replace(/^data:image\/[a-z]+;base64,/, '');
-                    } else {
-                        console.error("Failed to generate image:", imageResult.error);
-                        return false;
-                    }
-                } catch (error) {
-                    console.error("Error generating image:", error);
-                    return false;
-                }
-            } */
-
-        // const imageResult = await generateImage(
-        //     {
-        //         prompt: `logo for ${config.tokenName} (${config.tokenTicker}) token - ${config.bio}`,
-        //         width: 256,
-        //         height: 256,
-        //         count: 1,
-        //     },
-        //     runtime
-        // );
-
-        // // @ts-ignore
-        // config.image_description = imageResult.data[0].replace(
-        //     /^data:image\/[a-z]+;base64,/,
-        //     ""
-        // );
-
-        // Convert base64 string to Blob
-        // const base64Data = String(config.mediaUrl);
-        // const outputPath = path.join(
-        //     process.cwd(),
-        //     `generated_image_${Date.now()}.txt`
-        // );
-        // fs.writeFileSync(outputPath, base64Data);
-        // console.log(`Base64 data saved to: ${outputPath}`);
-
-        // const byteCharacters = atob(base64Data);
-        // const byteNumbers = new Array(byteCharacters.length);
-        // for (let i = 0; i < byteCharacters.length; i++) {
-        //     byteNumbers[i] = byteCharacters.charCodeAt(i);
-        // }
-        // const byteArray = new Uint8Array(byteNumbers);
-        // const blob = new Blob([byteArray], { type: "image/png" });
 
         // Add the default decimals and convert file to Blob
         const fullTokenMetadata: CreateTokenMetadata = {
@@ -738,6 +651,17 @@ export const createAndBuyTokenFn = {
                             },
                         },
                     });
+
+                    return Promise.resolve({
+                        tokenInfo: {
+                            symbol: config.tokenTicker,
+                            address: result.ca,
+                            creator: result.creator,
+                            name: config.tokenName,
+                            description: config.bio?.toString(),
+                            timestamp: Date.now(),
+                        },
+                    });
                 } else {
                     callback({
                         text: `Failed to create token: ${result.error}\nAttempted mint address: ${result.ca}`,
@@ -746,6 +670,7 @@ export const createAndBuyTokenFn = {
                             mintAddress: result.ca,
                         },
                     });
+                    return Promise.reject(result.error);
                 }
             }
             //await trustScoreDb.addToken(tokenInfo);
@@ -767,36 +692,7 @@ export const createAndBuyTokenFn = {
                     content: { error: error.message },
                 });
             }
-            return false;
+            return Promise.reject(error);
         }
     },
-
-    // examples: [
-    //     [
-    //         {
-    //             user: "{{user1}}",
-    //             content: {
-    //                 text: "Create a new token called GLITCHIZA with symbol GLITCHIZA and generate a description about it. Also come up with a description for it to use for image generation .buy 0.00069 SOL worth.",
-    //             },
-    //         },
-    //         {
-    //             user: "{{user2}}",
-    //             content: {
-    //                 text: "Token GLITCHIZA (GLITCHIZA) created successfully!\nContract Address: 3kD5DN4bbA3nykb1abjS66VF7cYZkKdirX8bZ6ShJjBB\nCreator: 9jW8FPr6BSSsemWPV22UUCzSqkVdTp6HTyPqeqyuBbCa\nView at: https://pump.fun/EugPwuZ8oUMWsYHeBGERWvELfLGFmA1taDtmY8uMeX6r",
-    //                 action: "CREATE_AND_BUY_TOKEN",
-    //                 content: {
-    //                     tokenInfo: {
-    //                         symbol: "GLITCHIZA",
-    //                         address:
-    //                             "EugPwuZ8oUMWsYHeBGERWvELfLGFmA1taDtmY8uMeX6r",
-    //                         creator:
-    //                             "9jW8FPr6BSSsemWPV22UUCzSqkVdTp6HTyPqeqyuBbCa",
-    //                         name: "GLITCHIZA",
-    //                         description: "A GLITCHIZA token",
-    //                     },
-    //                 },
-    //             },
-    //         },
-    //     ],
-    // ] as ActionExample[][],
 };
