@@ -504,20 +504,44 @@ const startAgents = async () => {
     }
 
     // @ts-ignore
-    directClient.registerCallback(async (config: AgentConfig) => {
+    directClient.registerCallback(async (config: any) => {
         // 动态启动 Agent
 
-        const character: Character = {
+        const characters0 = characters?.[0];
+
+        // 需要处理的字段列表
+        const arrayFields = [
+            "bio",
+            "lore",
+            "style",
+            "knowledge",
+            "adjectives",
+        ] as const;
+
+        // 统一处理数组字段
+        arrayFields.forEach((field) => {
+            if (config?.[field]) {
+                characters0[field] = Array.isArray(config[field])
+                    ? config[field]
+                    : config[field].split(",").map((str: string) => str.trim());
+            }
+        });
+
+        // 处理普通字段
+        if (config?.agentName) {
+            characters0.name = config.agentName;
+        }
+
+        const character = {
             ...characters?.[0],
-            ...config,
-            // 排除 x 字段，因为它是 Twitter 凭证不是 character 的属性
+            // 排除 Twitter 凭证
             x: undefined,
-        } as Character;
+        };
 
         await startAgent(character, directClient, {
-            TWITTER_USERNAME: config.x.username,
-            TWITTER_PASSWORD: config.x.password,
-            TWITTER_EMAIL: config.x.email,
+            TWITTER_USERNAME: config.twitterUsername,
+            TWITTER_PASSWORD: config.twitterPassword,
+            TWITTER_EMAIL: config.twitterEmail,
         });
 
         console.log("req.params registerCallbackFn character:", character);
