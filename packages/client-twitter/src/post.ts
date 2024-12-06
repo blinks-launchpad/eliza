@@ -28,9 +28,9 @@ const twitterPostTemplate = `
 
 # Task: Generate a post in the voice and style and perspective of {{agentName}} @{{twitterUserName}}.
 Write a 1-3 sentence post that is {{adjective}} about {{topic}} (without mentioning {{topic}} directly), from the perspective of {{agentName}}. Do not add commentary or acknowledge this request, just write the post.
-Your response should not contain any questions. Brief, concise statements only. The total character count MUST be less than 280. No emojis. Use \\n\\n (double spaces) between statements.`;
+Your response should not contain any questions. Brief, concise statements only. The total character count MUST be less than 200. No emojis. Use \\n\\n (double spaces) between statements.`;
 
-const MAX_TWEET_LENGTH = 280;
+const MAX_TWEET_LENGTH = 200;
 
 /**
  * Truncate text to fit within the Twitter character limit, ensuring it ends at a complete sentence.
@@ -120,7 +120,10 @@ export class TwitterPostClient {
         this.runtime = runtime;
     }
 
-    private async generateNewTweet() {
+    public async generateNewTweet(
+        twitterPostTemplate1 = twitterPostTemplate,
+        blinks = ""
+    ) {
         elizaLogger.log("Generating new tweet");
 
         try {
@@ -154,7 +157,7 @@ export class TwitterPostClient {
                 state,
                 template:
                     this.runtime.character.templates?.twitterPostTemplate ||
-                    twitterPostTemplate,
+                    twitterPostTemplate1,
             });
 
             elizaLogger.debug("generate post prompt:\n" + context);
@@ -173,7 +176,8 @@ export class TwitterPostClient {
             // Use the helper function to truncate to complete sentence
             const content =
                 truncateToCompleteSentence(formattedTweet) +
-                " https://www.blinks.gg/buy/62CsquahdQ3J286G9UTqV6whxryfihdV4yg7kSJnpump";
+                " " +
+                (blinks || "");
 
             if (this.runtime.getSetting("TWITTER_DRY_RUN") === "true") {
                 elizaLogger.info(

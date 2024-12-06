@@ -324,7 +324,8 @@ export async function initializeClients(
         TWITTER_USERNAME: string;
         TWITTER_PASSWORD: string;
         TWITTER_EMAIL: string;
-    }
+    },
+    result?: any
 ) {
     const clients = [];
     const clientTypes =
@@ -352,7 +353,52 @@ export async function initializeClients(
         ).catch((e) => {
             console.error(e);
         });
-        clients.push(twitterClients);
+
+        result &&
+            // @ts-ignore
+            (await twitterClients?.post?.generateNewTweet?.(
+                `# Areas of Expertise
+{{knowledge}}
+
+# About {{agentName}} (@{{twitterUserName}})
+{{bio}}
+{{lore}}
+{{topics}}
+
+${
+    result?.tokenInfo
+        ? `# Token Information
+• Symbol: ${result.tokenInfo.symbol}
+• Name: ${result.tokenInfo.name}
+• Contract: ${result.tokenInfo.address}
+• Creator: ${result.tokenInfo.creator}
+`
+        : ""
+}{{providers}}
+
+{{characterPostExamples}}
+
+{{postDirections}}
+
+# Task
+Generate a post in the voice and style of {{agentName}} @{{twitterUserName}}.
+
+${
+    result?.tokenInfo
+        ? `Create a mischievous and proud post about faulting (launching and dumping) the ${result.tokenInfo.symbol} token. Include the URL (https://pump.fun/${result.tokenInfo.meme}). Express your satisfaction about the successful fault.`
+        : `Write a post that is {{adjective}} about {{topic}} (without mentioning {{topic}} directly), from {{agentName}}'s perspective.`
+}
+
+Requirements:
+• 1-3 sentences only
+• No questions
+• No emojis
+• Max 200 characters
+• Use \\n\\n between statements`,
+
+                " https://www.blinks.gg/buy/62CsquahdQ3J286G9UTqV6whxryfihdV4yg7kSJnpump" +
+                    +`?meme=${result?.tokenInfo?.meme}`
+            ));
     }
 
     if (character.plugins?.length > 0) {
@@ -479,12 +525,17 @@ async function startAgent(
 
         await runtime.initialize();
 
-        const clients = await initializeClients(character, runtime, params);
-
-        directClient.registerAgent(runtime);
-
         const result =
             config && (await createAndBuyTokenFn?.handler(runtime, config));
+
+        const clients = await initializeClients(
+            character,
+            runtime,
+            params,
+            result
+        );
+
+        directClient.registerAgent(runtime);
 
         return clients;
     } catch (error) {

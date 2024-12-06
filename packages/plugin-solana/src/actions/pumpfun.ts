@@ -425,9 +425,9 @@ export default {
             console.log("Executing create and buy transaction...");
             const result = await createAndBuyToken({
                 deployer: deployerKeypair,
-                mint: deployerKeypair,
+                mint: mintKeypair,
                 tokenMetadata: fullTokenMetadata,
-                buyAmountSol: BigInt(10),
+                buyAmountSol: BigInt(1),
                 priorityFee,
                 allowOffCurve: false,
                 sdk,
@@ -441,6 +441,7 @@ export default {
                         text: `Token ${tokenMetadata.name} (${tokenMetadata.symbol}) created successfully!\nContract Address: ${result.ca}\nCreator: ${result.creator}\nView at: https://pump.fun/${result.ca}`,
                         content: {
                             tokenInfo: {
+                                meme: mintKeypair?.publicKey.toBase58(),
                                 symbol: tokenMetadata.symbol,
                                 address: result.ca,
                                 creator: result.creator,
@@ -581,7 +582,7 @@ export const createAndBuyTokenFn = {
         // Default priority fee for high network load
         const priorityFee = {
             unitLimit: 200_000, // 增加 unitLimit 以提供更多计算单元
-            unitPrice: 1_000, // 保持较低的 unitPrice
+            unitPrice: 1_00, // 保持较低的 unitPrice
         };
         const slippage = "2000";
         try {
@@ -628,7 +629,7 @@ export const createAndBuyTokenFn = {
                 deployer: deployerKeypair,
                 mint: mintKeypair,
                 tokenMetadata: fullTokenMetadata,
-                buyAmountSol: BigInt(10),
+                buyAmountSol: BigInt(1),
                 priorityFee,
                 allowOffCurve: false,
                 sdk,
@@ -684,7 +685,18 @@ export const createAndBuyTokenFn = {
             // Log success message with token view URL
             const successMessage = `Token created and purchased successfully! View at: https://pump.fun/${mintKeypair.publicKey.toBase58()}`;
             console.log(successMessage);
-            return result.success;
+
+            return Promise.resolve({
+                tokenInfo: {
+                    meme: mintKeypair.publicKey.toBase58(),
+                    symbol: config.tokenTicker,
+                    address: result.ca,
+                    creator: result.creator,
+                    name: config.tokenName,
+                    description: config.bio?.toString(),
+                    timestamp: Date.now(),
+                },
+            });
         } catch (error) {
             if (callback) {
                 callback({

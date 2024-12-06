@@ -276,22 +276,22 @@ export class DirectClient {
 
                 const config: AgentConfig = req.body;
 
-                if (
-                    !config?.x?.username ||
-                    !config?.x?.email ||
-                    !config?.x?.password
-                ) {
-                    res.status(404).send("x credentials not found");
-                    return;
-                }
+                // if (
+                //     !config?.x?.username ||
+                //     !config?.x?.email ||
+                //     !config?.x?.password
+                // ) {
+                //     res.status(404).send("x credentials not found");
+                //     return;
+                // }
 
                 this.registerCallbackFn?.({
-                    name: config.name,
-                    bio: config.bio?.[0] || "",
+                    // name: config.name,
+                    // bio: config.bio?.[0] || "",
                     ...config,
-                    TWITTER_USERNAME: config.x.username,
-                    TWITTER_PASSWORD: config.x.password,
-                    TWITTER_EMAIL: config.x.email,
+                    // TWITTER_USERNAME: config.x.username,
+                    // TWITTER_PASSWORD: config.x.password,
+                    // TWITTER_EMAIL: config.x.email,
                 });
 
                 console.log("req.params registerCallbackFn:", req.params);
@@ -310,22 +310,20 @@ export class DirectClient {
 
                 const config: AgentConfig = req.body;
 
-                if (
-                    !config?.x?.username ||
-                    !config?.x?.email ||
-                    !config?.x?.password
-                ) {
-                    res.status(404).send("x credentials not found");
-                    return;
-                }
+                // if (
+                //     !config?.x?.username ||
+                //     !config?.x?.email ||
+                //     !config?.x?.password
+                // ) {
+                //     res.status(404).send("x credentials not found");
+                //     return;
+                // }
 
                 this.registerCallbackFn?.({
-                    name: config.name,
-                    bio: config.bio?.[0] || "",
                     ...config,
-                    TWITTER_USERNAME: config.x.username,
-                    TWITTER_PASSWORD: config.x.password,
-                    TWITTER_EMAIL: config.x.email,
+                    // TWITTER_USERNAME: config.x.username,
+                    // TWITTER_PASSWORD: config.x.password,
+                    // TWITTER_EMAIL: config.x.email,
                 });
 
                 console.log("req.params registerCallbackFn:", req.params);
