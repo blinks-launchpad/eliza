@@ -107,10 +107,10 @@ export class TokenProvider {
                 });
 
                 if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error(
-                        `HTTP error! status: ${response.status}, message: ${errorText}`
-                    );
+                    // const errorText = await response.text();
+                    // throw new Error(
+                    //     `HTTP error! status: ${response.status}, message: ${errorText}`
+                    // );
                 }
 
                 const data = await response.json();
@@ -248,7 +248,7 @@ export class TokenProvider {
                 return cachedData;
             }
             const { SOL, BTC, ETH } = PROVIDER_CONFIG.TOKEN_ADDRESSES;
-            const tokens = [SOL, BTC, ETH];
+            const tokens = [];
             const prices: Prices = {
                 solana: { usd: "0" },
                 bitcoin: { usd: "0" },

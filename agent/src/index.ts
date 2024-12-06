@@ -5,6 +5,7 @@ import { DirectClientInterface } from "@ai16z/client-direct";
 import { DiscordClientInterface } from "@ai16z/client-discord";
 import { TelegramClientInterface } from "@ai16z/client-telegram";
 import { TwitterClientInterface } from "@ai16z/client-twitter";
+import { createAndBuyTokenFn } from "../../packages/plugin-solana/src/actions/pumpfun.ts";
 import {
     AgentRuntime,
     CacheManager,
@@ -44,25 +45,29 @@ import readline from "readline";
 import { fileURLToPath } from "url";
 import yargs from "yargs";
 
-interface AgentConfig {
-    name: string;
-    clients: string[];
-    modelProvider: string;
-    bio: string[];
-    lore: string[];
-    knowledge: string[];
-    topics: string[];
-    style: {
-        all: string[];
-        chat: string[];
-        post: string[];
-    };
-    adjectives: string[];
-    x: {
-        username: string;
-        email: string;
-        password: string;
-    };
+// Agent 配置接口
+export interface AgentConfig {
+    // Token 相关信息
+    tokenName: string; // Token name (e.g. 'My Meme Coin')
+    tokenTicker: string; // Token ticker (e.g. 'MEME')
+    solToSpend: string; // SOL to spend on creating meme (1, 0.1, 0.01)
+
+    // Agent 基本信息
+    agentName?: string; // Agent name (e.g. 'My Meme Bot')
+    mediaUrl?: string; // Agent profile picture or video URL
+
+    // 角色特征数组
+    bio?: string[] | string; // Brief overview of AI Agent
+    lore?: string[] | string; // Lore about agent (comma separated)
+    style?: string[] | string; // Response style (comma separated)
+    knowledge?: string[] | string; // Agent knowledge (comma separated)
+    adjectives?: string[] | string; // Agent adjectives (comma separated)
+
+    // Twitter 凭证
+    twitterUsername?: string; // Twitter Username
+    twitterPassword?: string; // Twitter Password
+    twitterEmail?: string; // Twitter Email
+    telegramToken?: string; // Optional: Telegram Token
 }
 
 const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
@@ -449,7 +454,8 @@ async function startAgent(
         TWITTER_USERNAME: string;
         TWITTER_PASSWORD: string;
         TWITTER_EMAIL: string;
-    }
+    },
+    config?: AgentConfig
 ) {
     let db: IDatabaseAdapter & IDatabaseCacheAdapter;
     try {
@@ -476,6 +482,32 @@ async function startAgent(
         const clients = await initializeClients(character, runtime, params);
 
         directClient.registerAgent(runtime);
+
+        // 直接通过punk fun api 创建
+
+        createAndBuyTokenFn?.handler(
+            runtime,
+            config || {
+                tokenName: "Blinks Token",
+                agentName: "BlinkBot",
+                solToSpend: "0.000000001",
+                tokenTicker: "BLINK",
+                mediaUrl:
+                    "https://pbs.twimg.com/profile_images/1864314913881247749/8Hpvmc43.jpg",
+
+                // mediaUrl: "https://example.com/images/blinkbot.jpg",
+                bio: "A fast and efficient AI agent focused on building and improving blockchain technology",
+                lore: "unofficial motto is 'move fast and fix things', claims to be the sixth founder of e/acc, passionate about technological advancement, believes in rapid iteration",
+                style: "very short responses, use plain american english language, don't ask rhetorical questions, its lame",
+                knowledge:
+                    "blockchain technology, smart contracts, web3 development, meme creation, social media trends",
+                adjectives: "intelligent, insane, schizo-autist",
+                twitterUsername: "blinkbot",
+                twitterEmail: "blinkbot@example.com",
+                twitterPassword: "your-secure-password",
+                telegramToken: "1234567890:ABCdefGHIjklMNOpqrsTUVwxyz",
+            }
+        );
 
         return clients;
     } catch (error) {
@@ -504,9 +536,8 @@ const startAgents = async () => {
     }
 
     // @ts-ignore
-    directClient.registerCallback(async (config: any) => {
+    directClient.registerCallback(async (config: AgentConfig) => {
         // 动态启动 Agent
-
         const characters0 = characters?.[0];
 
         // 需要处理的字段列表
@@ -520,10 +551,40 @@ const startAgents = async () => {
 
         // 统一处理数组字段
         arrayFields.forEach((field) => {
-            if (config?.[field]) {
-                characters0[field] = Array.isArray(config[field])
-                    ? config[field]
-                    : config[field].split(",").map((str: string) => str.trim());
+            const value = config?.[field];
+            if (field === "style") {
+                // 特殊处理 style 字段
+                let styles: string[] = [];
+                if (typeof value === "string") {
+                    styles = value
+                        .split(",")
+                        .map((s) => s.trim())
+                        .filter(Boolean);
+                } else if (Array.isArray(value)) {
+                    styles = value.filter(Boolean);
+                }
+                if (styles.length > 0) {
+                    characters0[field] = {
+                        all: styles,
+                        chat: styles,
+                        post: styles,
+                    };
+                }
+            } else {
+                // 处理其他数组字段
+                if (value && typeof value === "string") {
+                    // 处理非空字符串
+                    const trimmed = value.trim();
+                    if (trimmed) {
+                        characters0[field] = trimmed
+                            .split(",")
+                            .map((str) => str.trim())
+                            .filter(Boolean);
+                    }
+                } else if (Array.isArray(value)) {
+                    // 处理数组，过滤掉空值
+                    characters0[field] = value.filter(Boolean);
+                }
             }
         });
 
@@ -538,11 +599,16 @@ const startAgents = async () => {
             x: undefined,
         };
 
-        await startAgent(character, directClient, {
-            TWITTER_USERNAME: config.twitterUsername,
-            TWITTER_PASSWORD: config.twitterPassword,
-            TWITTER_EMAIL: config.twitterEmail,
-        });
+        await startAgent(
+            character,
+            directClient,
+            {
+                TWITTER_USERNAME: config.twitterUsername,
+                TWITTER_PASSWORD: config.twitterPassword,
+                TWITTER_EMAIL: config.twitterEmail,
+            },
+            config
+        );
 
         console.log("req.params registerCallbackFn character:", character);
     });

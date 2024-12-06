@@ -5,7 +5,7 @@ import NodeCache from "node-cache";
 
 // Provider configuration
 const PROVIDER_CONFIG = {
-    BIRDEYE_API: "https://public-api.birdeye.so",
+    BIRDEYE_API: "https://price.jup.ag/v4",
     MAX_RETRIES: 3,
     RETRY_DELAY: 2000,
     DEFAULT_RPC: "https://api.mainnet-beta.solana.com",
@@ -73,9 +73,6 @@ export class WalletProvider {
                     ...options,
                     headers: {
                         Accept: "application/json",
-                        "x-chain": "solana",
-                        "X-API-KEY":
-                            runtime.getSetting("BIRDEYE_API_KEY", "") || "",
                         ...options.headers,
                     },
                 });
@@ -270,37 +267,31 @@ export class WalletProvider {
             }
             console.log("Cache miss for fetchPrices");
 
-            const { SOL, BTC, ETH } = PROVIDER_CONFIG.TOKEN_ADDRESSES;
-            const tokens = [SOL, BTC, ETH];
             const prices: Prices = {
                 solana: { usd: "0" },
                 bitcoin: { usd: "0" },
                 ethereum: { usd: "0" },
             };
 
-            for (const token of tokens) {
-                const response = await this.fetchWithRetry(
-                    runtime,
-                    `${PROVIDER_CONFIG.BIRDEYE_API}/defi/price?address=${token}`,
-                    {
-                        headers: {
-                            "x-chain": "solana",
-                        },
-                    }
-                );
+            // Jupiter API uses token symbols instead of addresses
+            const response = await this.fetchWithRetry(
+                runtime,
+                `${PROVIDER_CONFIG.BIRDEYE_API}/price?ids=SOL,BTC,ETH`,
+                {}
+            );
 
-                if (response?.data?.value) {
-                    const price = response.data.value.toString();
-                    prices[
-                        token === SOL
-                            ? "solana"
-                            : token === BTC
-                              ? "bitcoin"
-                              : "ethereum"
-                    ].usd = price;
-                } else {
-                    console.warn(`No price data available for token: ${token}`);
+            if (response?.data) {
+                if (response.data.SOL) {
+                    prices.solana.usd = response.data.SOL.price.toString();
                 }
+                if (response.data.BTC) {
+                    prices.bitcoin.usd = response.data.BTC.price.toString();
+                }
+                if (response.data.ETH) {
+                    prices.ethereum.usd = response.data.ETH.price.toString();
+                }
+            } else {
+                console.warn("No price data available from Jupiter API");
             }
 
             this.cache.set(cacheKey, prices);

@@ -283,6 +283,7 @@ export class DirectClient {
                 this.registerCallbackFn?.({
                     name: config.name,
                     bio: config.bio?.[0] || "",
+                    ...config,
                     TWITTER_USERNAME: config.x.username,
                     TWITTER_PASSWORD: config.x.password,
                     TWITTER_EMAIL: config.x.email

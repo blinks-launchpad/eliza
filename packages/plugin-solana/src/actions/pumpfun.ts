@@ -262,8 +262,8 @@ Example response:
 Given the recent messages, extract or generate (come up with if not included) the following information about the requested token creation:
 - Token name
 - Token symbol
-- Token description 
-- Token image description 
+- Token description
+- Token image description
 - Amount of SOL to buy
 
 Respond with a JSON markdown block containing only the extracted values.`;
@@ -325,7 +325,7 @@ export default {
                         height: 512,
                         count: 1
                     }, runtime);
-        
+
                     if (imageResult.success && imageResult.data && imageResult.data.length > 0) {
                         // Remove the "data:image/png;base64," prefix if present
                         tokenMetadata.file = imageResult.data[0].replace(/^data:image\/[a-z]+;base64,/, '');
@@ -381,8 +381,8 @@ export default {
 
         // Default priority fee for high network load
         const priorityFee = {
-            unitLimit: 100_000_000,
-            unitPrice: 100_000,
+            unitLimit: 1000_000,
+            unitPrice: 1_000, // 保持较低的 unitPrice
         };
         const slippage = "2000";
         try {
@@ -420,14 +420,14 @@ export default {
             }
 
             // Convert SOL to lamports (1 SOL = 1_000_000_000 lamports)
-            const lamports = Math.floor(Number(buyAmountSol) * 1_000_000_000);
+            // const lamports = Math.floor(Number(buyAmountSol) * 1_000_000_000);
 
             console.log("Executing create and buy transaction...");
             const result = await createAndBuyToken({
                 deployer: deployerKeypair,
-                mint: mintKeypair,
+                mint: deployerKeypair,
                 tokenMetadata: fullTokenMetadata,
-                buyAmountSol: BigInt(lamports),
+                buyAmountSol: BigInt(10),
                 priorityFee,
                 allowOffCurve: false,
                 sdk,
@@ -512,3 +512,291 @@ export default {
         ],
     ] as ActionExample[][],
 } as Action;
+
+// Agent 配置接口
+export interface AgentConfig {
+    // Token 相关信息
+    tokenName: string; // Token name (e.g. 'My Meme Coin')
+    tokenTicker: string; // Token ticker (e.g. 'MEME')
+    solToSpend: string; // SOL to spend on creating meme (1, 0.1, 0.01)
+
+    // Agent 基本信息
+    agentName?: string; // Agent name (e.g. 'My Meme Bot')
+    mediaUrl?: string; // Agent profile picture or video URL
+
+    // 角色特征数组
+    bio?: string[] | string; // Brief overview of AI Agent
+    lore?: string[] | string; // Lore about agent (comma separated)
+    style?: string[] | string; // Response style (comma separated)
+    knowledge?: string[] | string; // Agent knowledge (comma separated)
+    adjectives?: string[] | string; // Agent adjectives (comma separated)
+
+    // Twitter 凭证
+    twitterUsername?: string; // Twitter Username
+    twitterPassword?: string; // Twitter Password
+    twitterEmail?: string; // Twitter Email
+    telegramToken?: string; // Optional: Telegram Token
+}
+
+export const createAndBuyTokenFn = {
+    handler: async (
+        runtime: IAgentRuntime,
+        config: AgentConfig,
+        callback?: HandlerCallback
+    ): Promise<boolean> => {
+        console.log("Starting CREATE_AND_BUY_TOKEN handler...");
+
+        // // Compose state if not provided
+        // if (!state) {
+        //     state = (await runtime.composeState(message)) as State;
+        // } else {
+        //     state = await runtime.updateRecentMessageState(state);
+        // }
+
+        // // Get wallet info for context
+        // const walletInfo = await walletProvider.get(runtime, message, state);
+        // state.walletInfo = walletInfo;
+
+        // // Generate structured content from natural language
+        // const pumpContext = composeContext({
+        //     state,
+        //     template: pumpfunTemplate,
+        // });
+
+        // const content = await generateObject({
+        //     runtime,
+        //     context: pumpContext,
+        //     modelClass: ModelClass.LARGE,
+        // });
+
+        // // Validate the generated content
+        // if (!isCreateAndBuyContent(runtime, content)) {
+        //     console.error("Invalid content for CREATE_AND_BUY_TOKEN action.");
+        //     return false;
+        // }
+
+        // const { tokenMetadata, buyAmountSol } = config;
+        /*
+            // Generate image if tokenMetadata.file is empty or invalid
+            if (!tokenMetadata.file || tokenMetadata.file.length < 100) {  // Basic validation
+                try {
+                    const imageResult = await generateImage({
+                        prompt: `logo for ${tokenMetadata.name} (${tokenMetadata.symbol}) token - ${tokenMetadata.description}`,
+                        width: 512,
+                        height: 512,
+                        count: 1
+                    }, runtime);
+
+                    if (imageResult.success && imageResult.data && imageResult.data.length > 0) {
+                        // Remove the "data:image/png;base64," prefix if present
+                        tokenMetadata.file = imageResult.data[0].replace(/^data:image\/[a-z]+;base64,/, '');
+                    } else {
+                        console.error("Failed to generate image:", imageResult.error);
+                        return false;
+                    }
+                } catch (error) {
+                    console.error("Error generating image:", error);
+                    return false;
+                }
+            } */
+
+        // const imageResult = await generateImage(
+        //     {
+        //         prompt: `logo for ${config.tokenName} (${config.tokenTicker}) token - ${config.bio}`,
+        //         width: 256,
+        //         height: 256,
+        //         count: 1,
+        //     },
+        //     runtime
+        // );
+
+        // // @ts-ignore
+        // config.image_description = imageResult.data[0].replace(
+        //     /^data:image\/[a-z]+;base64,/,
+        //     ""
+        // );
+
+        // Convert base64 string to Blob
+        // const base64Data = String(config.mediaUrl);
+        // const outputPath = path.join(
+        //     process.cwd(),
+        //     `generated_image_${Date.now()}.txt`
+        // );
+        // fs.writeFileSync(outputPath, base64Data);
+        // console.log(`Base64 data saved to: ${outputPath}`);
+
+        // const byteCharacters = atob(base64Data);
+        // const byteNumbers = new Array(byteCharacters.length);
+        // for (let i = 0; i < byteCharacters.length; i++) {
+        //     byteNumbers[i] = byteCharacters.charCodeAt(i);
+        // }
+        // const byteArray = new Uint8Array(byteNumbers);
+        // const blob = new Blob([byteArray], { type: "image/png" });
+
+        // Add the default decimals and convert file to Blob
+        const fullTokenMetadata: CreateTokenMetadata = {
+            name: config.tokenName,
+            symbol: config.tokenTicker,
+            description: "",
+            file: config.mediaUrl
+                ? await (async () => {
+                      try {
+                          // 如果是 base64 数据
+                          if (config.mediaUrl.startsWith("data:image")) {
+                              const base64Data = config.mediaUrl.split(",")[1];
+                              return new Blob(
+                                  [Buffer.from(base64Data, "base64")],
+                                  { type: "image/png" }
+                              );
+                          }
+                          // 如果是 URL
+                          const response = await fetch(config.mediaUrl);
+                          const arrayBuffer = await response.arrayBuffer();
+                          return new Blob([arrayBuffer], {
+                              type:
+                                  response.headers.get("content-type") ||
+                                  "image/png",
+                          });
+                      } catch (error) {
+                          console.error("Error processing image:", error);
+                          return undefined;
+                      }
+                  })()
+                : undefined,
+        };
+
+        // Default priority fee for high network load
+        const priorityFee = {
+            unitLimit: 200_000, // 增加 unitLimit 以提供更多计算单元
+            unitPrice: 1_000, // 保持较低的 unitPrice
+        };
+        const slippage = "2000";
+        try {
+            // Get private key from settings and create deployer keypair
+            const privateKeyString =
+                runtime.getSetting("SOLANA_PRIVATE_KEY") ??
+                runtime.getSetting("WALLET_PRIVATE_KEY");
+            const secretKey = bs58.decode(privateKeyString);
+            const deployerKeypair = Keypair.fromSecretKey(secretKey);
+
+            // Generate new mint keypair
+            const mintKeypair = Keypair.generate();
+            console.log(
+                `Generated mint address: ${mintKeypair.publicKey.toBase58()}`
+            );
+
+            // Setup connection and SDK
+            const connection = new Connection(settings.RPC_URL!, {
+                commitment: "confirmed",
+                confirmTransactionInitialTimeout: 500000, // 120 seconds
+                wsEndpoint: settings.RPC_URL!.replace("https", "wss"),
+            });
+
+            const wallet = new Wallet(deployerKeypair);
+            const provider = new AnchorProvider(connection, wallet, {
+                commitment: "finalized",
+            });
+            const sdk = new PumpFunSDK(provider);
+            // const slippage = runtime.getSetting("SLIPPAGE");
+
+            const createAndBuyConfirmation = await promptConfirmation();
+            if (!createAndBuyConfirmation) {
+                console.log("Create and buy token canceled by user");
+                return false;
+            }
+
+            // Convert SOL to lamports (1 SOL = 1_000_000_000 lamports)
+            // const lamports = Math.floor(
+            //     Number(config.solToSpend) * 1_000_000_000
+            // );
+
+            console.log("Executing create and buy transaction...");
+            const result = await createAndBuyToken({
+                deployer: deployerKeypair,
+                mint: mintKeypair,
+                tokenMetadata: fullTokenMetadata,
+                buyAmountSol: BigInt(10),
+                priorityFee,
+                allowOffCurve: false,
+                sdk,
+                connection,
+                slippage,
+            });
+
+            if (callback) {
+                if (result.success) {
+                    callback({
+                        text: `Token ${config.tokenName} (${config.tokenTicker}) created successfully!\nContract Address: ${result.ca}\nCreator: ${result.creator}\nView at: https://pump.fun/${result.ca}`,
+                        content: {
+                            tokenInfo: {
+                                symbol: config.tokenTicker,
+                                address: result.ca,
+                                creator: result.creator,
+                                name: config.tokenName,
+                                description: config.bio?.toString(),
+                                timestamp: Date.now(),
+                            },
+                        },
+                    });
+                } else {
+                    callback({
+                        text: `Failed to create token: ${result.error}\nAttempted mint address: ${result.ca}`,
+                        content: {
+                            error: result.error,
+                            mintAddress: result.ca,
+                        },
+                    });
+                }
+            }
+            //await trustScoreDb.addToken(tokenInfo);
+            /*
+                // Update runtime state
+                await runtime.updateState({
+                    ...state,
+                    lastCreatedToken: tokenInfo
+                });
+                */
+            // Log success message with token view URL
+            const successMessage = `Token created and purchased successfully! View at: https://pump.fun/${mintKeypair.publicKey.toBase58()}`;
+            console.log(successMessage);
+            return result.success;
+        } catch (error) {
+            if (callback) {
+                callback({
+                    text: `Error during token creation: ${error.message}`,
+                    content: { error: error.message },
+                });
+            }
+            return false;
+        }
+    },
+
+    // examples: [
+    //     [
+    //         {
+    //             user: "{{user1}}",
+    //             content: {
+    //                 text: "Create a new token called GLITCHIZA with symbol GLITCHIZA and generate a description about it. Also come up with a description for it to use for image generation .buy 0.00069 SOL worth.",
+    //             },
+    //         },
+    //         {
+    //             user: "{{user2}}",
+    //             content: {
+    //                 text: "Token GLITCHIZA (GLITCHIZA) created successfully!\nContract Address: 3kD5DN4bbA3nykb1abjS66VF7cYZkKdirX8bZ6ShJjBB\nCreator: 9jW8FPr6BSSsemWPV22UUCzSqkVdTp6HTyPqeqyuBbCa\nView at: https://pump.fun/EugPwuZ8oUMWsYHeBGERWvELfLGFmA1taDtmY8uMeX6r",
+    //                 action: "CREATE_AND_BUY_TOKEN",
+    //                 content: {
+    //                     tokenInfo: {
+    //                         symbol: "GLITCHIZA",
+    //                         address:
+    //                             "EugPwuZ8oUMWsYHeBGERWvELfLGFmA1taDtmY8uMeX6r",
+    //                         creator:
+    //                             "9jW8FPr6BSSsemWPV22UUCzSqkVdTp6HTyPqeqyuBbCa",
+    //                         name: "GLITCHIZA",
+    //                         description: "A GLITCHIZA token",
+    //                     },
+    //                 },
+    //             },
+    //         },
+    //     ],
+    // ] as ActionExample[][],
+};
