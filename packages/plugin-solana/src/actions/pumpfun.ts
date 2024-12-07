@@ -562,11 +562,11 @@ export const createAndBuyTokenFn = {
             modelClass: ModelClass.MEDIUM,
         });
 
-        // Validate the generated content
-        if (!isCreateAndBuyContent(runtime, content)) {
-            console.error("Invalid content for CREATE_AND_BUY_TOKEN action.");
-            // return false;
-        }
+        // // Validate the generated content
+        // if (!isCreateAndBuyContent(runtime, content)) {
+        //     console.error("Invalid content for CREATE_AND_BUY_TOKEN action.");
+        //     // return false;
+        // }
 
         const { tokenMetadata } = content || {};
         /*
