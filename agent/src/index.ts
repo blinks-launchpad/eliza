@@ -355,6 +355,8 @@ export async function initializeClients(
             console.error(e);
         });
 
+        console.log("result result:", result);
+
         result &&
             // @ts-ignore
             (await twitterClients?.post?.generateNewTweet?.(
@@ -386,7 +388,7 @@ Generate a post in the voice and style of {{agentName}} @{{twitterUserName}}.
 
 ${
     result?.tokenInfo
-        ? `Create a mischievous and proud post about faulting (launching and dumping) the ${result.tokenInfo.symbol} token. Include the URL (https://pump.fun/${result.tokenInfo.meme}). Express your satisfaction about the successful fault.`
+        ? `Create a mischievous and proud post about faulting (launching and dumping) the ${result.tokenInfo.symbol} token. Express your satisfaction about the successful fault.`
         : `Write a post that is {{adjective}} about {{topic}} (without mentioning {{topic}} directly), from {{agentName}}'s perspective.`
 }
 
@@ -397,8 +399,8 @@ Requirements:
 • Max 200 characters
 • Use \\n\\n between statements`,
 
-                " https://www.blinks.gg/buy/62CsquahdQ3J286G9UTqV6whxryfihdV4yg7kSJnpump" +
-                    +`?meme=${result?.tokenInfo?.meme}`
+                " https://bl.punky.app/api/actions/swap/buy?token=" +
+                    `${result?.tokenInfo?.meme}`
             ));
     }
 
