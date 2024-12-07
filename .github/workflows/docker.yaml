@@ -70,4 +70,4 @@ jobs:
                   host: ${{ secrets.SSH_HOST }}
                   username: ${{ secrets.SSH_USERNAME }}
                   key: ${{ secrets.SERVER_SSH_KEY }}
-                  script: bash update-bl.sh
+                  script: bash update-eliza.sh
