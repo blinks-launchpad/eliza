@@ -60,6 +60,7 @@ export interface SimliClientConfig {
 }
 
 interface AgentConfig {
+    prompt: string;
     name: string;
     clients: string[];
     modelProvider: string;
@@ -270,45 +271,65 @@ export class DirectClient {
         );
 
         this.app.post(
-            "/:agentId/buy",
-            async (req: express.Request, res: express.Response) => {
-                console.log("req.params:", req.params);
-
-                const config: AgentConfig = req.body;
-
-                // if (
-                //     !config?.x?.username ||
-                //     !config?.x?.email ||
-                //     !config?.x?.password
-                // ) {
-                //     res.status(404).send("x credentials not found");
-                //     return;
-                // }
-
-                this.registerCallbackFn?.({
-                    // name: config.name,
-                    // bio: config.bio?.[0] || "",
-                    ...config,
-                    // TWITTER_USERNAME: config.x.username,
-                    // TWITTER_PASSWORD: config.x.password,
-                    // TWITTER_EMAIL: config.x.email,
-                });
-
-                console.log("req.params registerCallbackFn:", req.params);
-
-                // 返回固定的 publicKey 以匹配接收端期望
-                res.json({
-                    publicKey: "9sLjVe4eLUUTuFKqV1ce5pqumUYBC6spn6rXoWWcGiLN",
-                });
-            }
-        );
-
-        this.app.post(
             "/:agentId/form",
             async (req: express.Request, res: express.Response) => {
                 console.log("req.params:", req.params);
 
+                const agentId = req.params.agentId;
+                const roomId = stringToUuid(
+                    req.body?.roomId ?? "default-room-" + agentId
+                );
+                const userId = stringToUuid(req?.body?.userId ?? "user");
+
+                let runtime = this.agents.get(agentId);
+
+                // if runtime is null, look for runtime with the same name
+                if (!runtime) {
+                    runtime = Array.from(this.agents.values()).find(
+                        (a) =>
+                            a.character.name.toLowerCase() ===
+                            agentId.toLowerCase()
+                    );
+                }
+
+                if (!runtime) {
+                    res.status(404).send("Agent not found");
+                    return;
+                }
+
+                await runtime.ensureConnection(
+                    userId,
+                    roomId,
+                    req.body.userName,
+                    req.body.name,
+                    "direct"
+                );
+
                 const config: AgentConfig = req.body;
+
+                const text =
+                    config?.prompt ||
+                    "Create a new token called GLITCHIZA with symbol GLITCHIZA and generate a description about it. Also come up with a description for it to use for image generation .buy 0.00069 SOL worth.";
+
+                const messageId = stringToUuid(Date.now().toString());
+
+                const content: Content = {
+                    text,
+                    attachments: [],
+                    source: "direct",
+                    inReplyTo: undefined,
+                };
+
+                const memory: Memory = {
+                    id: messageId,
+                    agentId: runtime.agentId,
+                    userId,
+                    roomId,
+                    content,
+                    createdAt: Date.now(),
+                };
+
+                await runtime.messageManager.createMemory(memory);
 
                 // if (
                 //     !config?.x?.username ||
@@ -319,12 +340,7 @@ export class DirectClient {
                 //     return;
                 // }
 
-                this.registerCallbackFn?.({
-                    ...config,
-                    // TWITTER_USERNAME: config.x.username,
-                    // TWITTER_PASSWORD: config.x.password,
-                    // TWITTER_EMAIL: config.x.email,
-                });
+                this.registerCallbackFn?.(config, memory);
 
                 console.log("req.params registerCallbackFn:", req.params);
 

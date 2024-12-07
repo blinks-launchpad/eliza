@@ -38,12 +38,14 @@ export function isCreateAndBuyContent(
 ): content is CreateAndBuyContent {
     console.log("Content for create & buy", content);
     return (
+        typeof content === "object" &&
+        content !== null &&
         typeof content.tokenMetadata === "object" &&
         content.tokenMetadata !== null &&
         typeof content.tokenMetadata.name === "string" &&
         typeof content.tokenMetadata.symbol === "string" &&
         typeof content.tokenMetadata.description === "string" &&
-        typeof content.tokenMetadata.image_description === "string" &&
+        typeof content.tokenMetadata?.image_description === "string" &&
         (typeof content.buyAmountSol === "string" ||
             typeof content.buyAmountSol === "number")
     );
@@ -314,7 +316,7 @@ export default {
             return false;
         }
 
-        const { tokenMetadata, buyAmountSol } = content;
+        const { tokenMetadata, buyAmountSol } = content || {};
         /*
             // Generate image if tokenMetadata.file is empty or invalid
             if (!tokenMetadata.file || tokenMetadata.file.length < 100) {  // Basic validation
@@ -542,16 +544,60 @@ export interface AgentConfig {
 export const createAndBuyTokenFn = {
     handler: async (
         runtime: IAgentRuntime,
+        message: Memory,
         config: AgentConfig,
         callback?: HandlerCallback
     ) => {
-        console.log("Starting CREATE_AND_BUY_TOKEN handler...");
+        const state = (await runtime.composeState(message)) as State;
+
+        // Generate structured content from natural language
+        const pumpContext = composeContext({
+            state,
+            template: pumpfunTemplate,
+        });
+
+        const content = await generateObject({
+            runtime,
+            context: pumpContext,
+            modelClass: ModelClass.MEDIUM,
+        });
+
+        // Validate the generated content
+        if (!isCreateAndBuyContent(runtime, content)) {
+            console.error("Invalid content for CREATE_AND_BUY_TOKEN action.");
+            // return false;
+        }
+
+        const { tokenMetadata } = content || {};
+        /*
+            // Generate image if tokenMetadata.file is empty or invalid
+            if (!tokenMetadata.file || tokenMetadata.file.length < 100) {  // Basic validation
+                try {
+                    const imageResult = await generateImage({
+                        prompt: `logo for ${tokenMetadata.name} (${tokenMetadata.symbol}) token - ${tokenMetadata.description}`,
+                        width: 512,
+                        height: 512,
+                        count: 1
+                    }, runtime);
+
+                    if (imageResult.success && imageResult.data && imageResult.data.length > 0) {
+                        // Remove the "data:image/png;base64," prefix if present
+                        tokenMetadata.file = imageResult.data[0].replace(/^data:image\/[a-z]+;base64,/, '');
+                    } else {
+                        console.error("Failed to generate image:", imageResult.error);
+                        return false;
+                    }
+                } catch (error) {
+                    console.error("Error generating image:", error);
+                    return false;
+                }
+            } */
 
         // Add the default decimals and convert file to Blob
         const fullTokenMetadata: CreateTokenMetadata = {
-            name: config.tokenName,
-            symbol: config.tokenTicker,
-            description: "",
+            name: tokenMetadata?.name,
+            symbol: tokenMetadata?.symbol,
+            description: tokenMetadata?.description,
             file: config.mediaUrl
                 ? await (async () => {
                       try {
@@ -649,18 +695,8 @@ export const createAndBuyTokenFn = {
                                 name: config.tokenName,
                                 description: config.bio?.toString(),
                                 timestamp: Date.now(),
+                                ...tokenMetadata,
                             },
-                        },
-                    });
-
-                    return Promise.resolve({
-                        tokenInfo: {
-                            symbol: config.tokenTicker,
-                            address: result.ca,
-                            creator: result.creator,
-                            name: config.tokenName,
-                            description: config.bio?.toString(),
-                            timestamp: Date.now(),
                         },
                     });
                 } else {
@@ -695,6 +731,7 @@ export const createAndBuyTokenFn = {
                     name: config.tokenName,
                     description: config.bio?.toString(),
                     timestamp: Date.now(),
+                    ...tokenMetadata,
                 },
             });
         } catch (error) {

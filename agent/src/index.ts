@@ -16,6 +16,7 @@ import {
     ICacheManager,
     IDatabaseAdapter,
     IDatabaseCacheAdapter,
+    Memory,
     ModelProviderName,
     defaultCharacter,
     elizaLogger,
@@ -501,7 +502,8 @@ async function startAgent(
         TWITTER_PASSWORD: string;
         TWITTER_EMAIL: string;
     },
-    config?: AgentConfig
+    config?: AgentConfig,
+    memory?: Memory
 ) {
     let db: IDatabaseAdapter & IDatabaseCacheAdapter;
     try {
@@ -526,7 +528,8 @@ async function startAgent(
         await runtime.initialize();
 
         const result =
-            config && (await createAndBuyTokenFn?.handler(runtime, config));
+            config &&
+            (await createAndBuyTokenFn?.handler(runtime, memory, config));
 
         const clients = await initializeClients(
             character,
@@ -564,82 +567,85 @@ const startAgents = async () => {
     }
 
     // @ts-ignore
-    directClient.registerCallback(async (config: AgentConfig) => {
-        // 动态启动 Agent
-        const characters0 = characters?.[0];
+    directClient.registerCallback(
+        async (config: AgentConfig, memory: Memory) => {
+            // 动态启动 Agent
+            const characters0 = characters?.[0];
 
-        // 需要处理的字段列表
-        const arrayFields = [
-            "bio",
-            "lore",
-            "style",
-            "knowledge",
-            "adjectives",
-        ] as const;
+            // 需要处理的字段列表
+            const arrayFields = [
+                "bio",
+                "lore",
+                "style",
+                "knowledge",
+                "adjectives",
+            ] as const;
 
-        // 统一处理数组字段
-        arrayFields.forEach((field) => {
-            const value = config?.[field];
-            if (field === "style") {
-                // 特殊处理 style 字段
-                let styles: string[] = [];
-                if (typeof value === "string") {
-                    styles = value
-                        .split(",")
-                        .map((s) => s.trim())
-                        .filter(Boolean);
-                } else if (Array.isArray(value)) {
-                    styles = value.filter(Boolean);
-                }
-                if (styles.length > 0) {
-                    characters0[field] = {
-                        all: styles,
-                        chat: styles,
-                        post: styles,
-                    };
-                }
-            } else {
-                // 处理其他数组字段
-                if (value && typeof value === "string") {
-                    // 处理非空字符串
-                    const trimmed = value.trim();
-                    if (trimmed) {
-                        characters0[field] = trimmed
+            // 统一处理数组字段
+            arrayFields.forEach((field) => {
+                const value = config?.[field];
+                if (field === "style") {
+                    // 特殊处理 style 字段
+                    let styles: string[] = [];
+                    if (typeof value === "string") {
+                        styles = value
                             .split(",")
-                            .map((str) => str.trim())
+                            .map((s) => s.trim())
                             .filter(Boolean);
+                    } else if (Array.isArray(value)) {
+                        styles = value.filter(Boolean);
                     }
-                } else if (Array.isArray(value)) {
-                    // 处理数组，过滤掉空值
-                    characters0[field] = value.filter(Boolean);
+                    if (styles.length > 0) {
+                        characters0[field] = {
+                            all: styles,
+                            chat: styles,
+                            post: styles,
+                        };
+                    }
+                } else {
+                    // 处理其他数组字段
+                    if (value && typeof value === "string") {
+                        // 处理非空字符串
+                        const trimmed = value.trim();
+                        if (trimmed) {
+                            characters0[field] = trimmed
+                                .split(",")
+                                .map((str) => str.trim())
+                                .filter(Boolean);
+                        }
+                    } else if (Array.isArray(value)) {
+                        // 处理数组，过滤掉空值
+                        characters0[field] = value.filter(Boolean);
+                    }
                 }
+            });
+
+            // 处理普通字段
+            if (config?.agentName) {
+                characters0.name = config.agentName;
             }
-        });
 
-        // 处理普通字段
-        if (config?.agentName) {
-            characters0.name = config.agentName;
+            const character = {
+                ...characters?.[0],
+                // 排除 Twitter 凭证
+                x: undefined,
+            };
+
+            await startAgent(
+                character,
+                directClient,
+                {
+                    TWITTER_USERNAME: config.twitterUsername,
+                    TWITTER_PASSWORD: config.twitterPassword,
+                    TWITTER_EMAIL: config.twitterEmail,
+                },
+                config,
+                memory
+            );
+
+            console.log("req.params registerCallbackFn character:", character);
         }
-
-        const character = {
-            ...characters?.[0],
-            // 排除 Twitter 凭证
-            x: undefined,
-        };
-
-        await startAgent(
-            character,
-            directClient,
-            {
-                TWITTER_USERNAME: config.twitterUsername,
-                TWITTER_PASSWORD: config.twitterPassword,
-                TWITTER_EMAIL: config.twitterEmail,
-            },
-            config
-        );
-
-        console.log("req.params registerCallbackFn character:", character);
-    });
+    );
 
     try {
         for (const character of characters) {
