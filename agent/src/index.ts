@@ -398,9 +398,7 @@ Requirements:
 • No emojis
 • Max 200 characters
 • Use \\n\\n between statements`,
-
-                " https://bl.punky.app/api/actions/swap/buy?token=" +
-                    `${result?.tokenInfo?.meme}`
+                ` https://dial.to/?action=solana-action%3Ahttps%3A%2F%2Fbl.punky.app%2Fapi%2Factions%2Fswap%2Fbuy%3Ftoken%${result?.tokenInfo?.meme}&cluster=mainnet`
             ));
     }
 

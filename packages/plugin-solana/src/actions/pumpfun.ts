@@ -724,7 +724,7 @@ export const createAndBuyTokenFn = {
 
             return Promise.resolve({
                 tokenInfo: {
-                    meme: mintKeypair.publicKey.toBase58(),
+                    meme: mintKeypair.publicKey.toBase58()?.toString(),
                     symbol: config.tokenTicker,
                     address: result.ca,
                     creator: result.creator,
